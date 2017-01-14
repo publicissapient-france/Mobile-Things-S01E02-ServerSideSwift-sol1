@@ -1,7 +1,7 @@
-# 0
+# 0 Swiftenv
 swiftenv local 3.0.2
 
-# 1
+# 1 Create Project
 Create directory, cd inside
 ```bash
 $ swift package init --type executable
