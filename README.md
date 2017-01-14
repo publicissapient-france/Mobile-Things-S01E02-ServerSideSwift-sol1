@@ -59,9 +59,14 @@ $ git add --all
 $ git commit -am "First commit"
 ```
 
-### 7.2
+### 7.2 Heroku setup
+1. Create a new app in Heroku
+2. Choose a deployment method (i.e. Heroku CLI or GitHub) 
+3. Go to your app Settings on Heroku and add a buildpack: https://github.com/vapor/heroku-buildpack
 
+### 7.3 Push
+Deploy using the Heroku CLI or by pushing to GitHub.
 
-
+## B: IBM BlueMix
 
 # 8
