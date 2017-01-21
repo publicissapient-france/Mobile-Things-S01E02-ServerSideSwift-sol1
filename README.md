@@ -70,3 +70,9 @@ Deploy using the Heroku CLI or by pushing to GitHub.
 ## B: IBM BlueMix
 
 # 8
+
+---
+
+# Slack
+
+https://fashicon.slack.com/apps/build
