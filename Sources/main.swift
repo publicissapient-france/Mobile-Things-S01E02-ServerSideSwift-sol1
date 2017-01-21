@@ -65,16 +65,27 @@ enum Vote: String {
 drop.post("vote-giphy") { req in
     Logger.info("env: " + (ProcessInfo.processInfo.environment["REDIS_URL"] ?? "no env var"))
     
-    guard let text = req.data["text"]?.string, let vote = Vote(rawValue: text) else {
-        return Response(status: .badRequest)
+    // TODO: Split in two parts
+    
+    guard let text = req.data["text"]?.string else {
+        return Response(status: .badRequest, body: "No input provided")
+    }
+    
+    let tokens = text.components(separatedBy: " ")
+    guard tokens.count == 2 else {
+        return Response(status: .badRequest, body: "Wrong number of parameters")
+    }
+    
+    guard let vote = Vote(rawValue: tokens[1]) else {
+        return Response(status: .badRequest, body: "You can only vote with \"+\" or \"-\"")
     }
     
     let payload: [String : Any] = [
-        "text": vote.rawValue
+        "text": "Voted gif _\(tokens[0])_ with *\(vote.rawValue)*"
     ]
     
     let data = try Jay(formatting: .prettified).dataFromJson(any: payload)
-    return Response(status: .ok, body: data)
+    return Response(status: .ok, headers: ["Content-Type": "application/json"], body: data)
 
 }
 
