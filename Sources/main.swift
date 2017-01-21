@@ -31,11 +31,15 @@ drop.post("search-giphy") { req in
                 return
             }
             
-            let r = try! JSON.init(serialized: queryResponseBytes)
-            
-            if let urlArray = r["data"]?["images"]?["original"]?["url"]?.array,
-                urlArray.count > 0,
-                let string = urlArray[0].string {
+            do {
+                let giphyResponse = try JSON.init(serialized: queryResponseBytes)
+                guard let urlArray = giphyResponse["data"]?["images"]?["original"]?["url"]?.array,
+                    urlArray.count > 0,
+                    let string = urlArray[0].string
+                else {
+                    portal.close(with: Response(status: .notFound))
+                    return
+                }
                 
                 let payload: [String : Any] = [
                     "text": string,
@@ -43,15 +47,14 @@ drop.post("search-giphy") { req in
                         "text": "a"
                     ]
                 ]
+                    
+                let data = try Jay(formatting: .prettified).dataFromJson(any: payload)
+                portal.close(with: Response(status: .ok, body: data))
                 
-                do {
-                    let data = try Jay(formatting: .prettified).dataFromJson(any: payload)
-                    portal.close(with: Response(status: .ok, body: data))
-                } catch {
-                    portal.close(with: Response(status: .internalServerError))
-                }
-
+            } catch {
+                portal.close(with: Response(status: .internalServerError))
             }
+            
             portal.close(with: Response(status: .notFound))
             
         }).resume()
