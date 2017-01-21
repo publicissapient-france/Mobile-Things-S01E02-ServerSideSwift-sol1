@@ -4,10 +4,6 @@ import HTTP
 import JSON
 import Jay
 
-// 105811633521.130591365587 client ID
-// 2eafe0d6e3d37295451529bc1648bf7c secret
-// n4XlNmMZpjXzP9clhkvfRByT Verification token
-
 let drop = Droplet()
 
 drop.get { req in
@@ -16,7 +12,7 @@ drop.get { req in
 
 drop.post("search-giphy") { req in
     Logger.info("env: " + (ProcessInfo.processInfo.environment["REDIS_URL"] ?? "no env var"))
-       
+    
     guard let query = req.data["text"]?.string?
         .replacingOccurrences(of: " ", with: "+") else {
         return Response(status: .badRequest)
@@ -43,9 +39,9 @@ drop.post("search-giphy") { req in
                 
                 let payload: [String : Any] = [
                     "text": "Here is a \(query) gif",
-                    "attachment": [
+                    "attachments": [[
                         "image_url": firstGifUrl
-                    ]
+                    ]]
                 ]
                     
                 let data = try Jay(formatting: .prettified).dataFromJson(any: payload)
@@ -59,6 +55,26 @@ drop.post("search-giphy") { req in
             
         }).resume()
     }
+}
+
+enum Vote: String {
+    case up = "+"
+    case down = "-"
+}
+
+drop.post("vote-giphy") { req in
+    Logger.info("env: " + (ProcessInfo.processInfo.environment["REDIS_URL"] ?? "no env var"))
+    
+    guard let text = req.data["text"]?.string, let vote = Vote(rawValue: text) else {
+        return Response(status: .badRequest)
+    }
+    
+    let payload: [String : Any] = [
+        "text": vote.rawValue
+    ]
+    
+    let data = try Jay(formatting: .prettified).dataFromJson(any: payload)
+    return Response(status: .ok, body: data)
 
 }
 
