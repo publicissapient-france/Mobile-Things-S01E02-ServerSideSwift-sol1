@@ -2,6 +2,7 @@ import Vapor
 import Foundation
 import HTTP
 import JSON
+import Jay
 
 // 105811633521.130591365587 client ID
 // 2eafe0d6e3d37295451529bc1648bf7c secret
@@ -14,7 +15,7 @@ drop.get { req in
 }
 
 drop.post("search-giphy") { req in
-    print("env: " + (ProcessInfo.processInfo.environment["REDIS_URL"] ?? "no env var"))
+    Logger.info("env: " + (ProcessInfo.processInfo.environment["REDIS_URL"] ?? "no env var"))
        
     guard let query = req.data["text"]?.string?
         .replacingOccurrences(of: " ", with: "+") else {
@@ -35,7 +36,21 @@ drop.post("search-giphy") { req in
             if let urlArray = r["data"]?["images"]?["original"]?["url"]?.array,
                 urlArray.count > 0,
                 let string = urlArray[0].string {
-                portal.close(with: Response(status: .ok, body: string))
+                
+                let payload: [String : Any] = [
+                    "text": string,
+                    "attachment": [
+                        "text": "a"
+                    ]
+                ]
+                
+                do {
+                    let data = try Jay(formatting: .prettified).dataFromJson(any: payload)
+                    portal.close(with: Response(status: .ok, body: data))
+                } catch {
+                    portal.close(with: Response(status: .internalServerError))
+                }
+
             }
             portal.close(with: Response(status: .notFound))
             
