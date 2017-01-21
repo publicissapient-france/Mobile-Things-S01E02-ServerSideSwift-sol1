@@ -6,7 +6,11 @@
 //
 //
 
-import Foundation
+#if os(Linux)
+    import Glibc
+#else
+    import Darwin
+#endif
 
 enum Logger {
     static func info(_ string: String) {
