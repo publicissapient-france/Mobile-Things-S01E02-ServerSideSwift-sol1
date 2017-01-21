@@ -49,7 +49,7 @@ drop.post("search-giphy") { req in
                 ]
                     
                 let data = try Jay(formatting: .prettified).dataFromJson(any: payload)
-                portal.close(with: Response(status: .ok, body: data))
+                portal.close(with: Response(status: .ok, headers: ["Content-Type": "application/json"], body: data))
                 
             } catch {
                 portal.close(with: Response(status: .internalServerError))
