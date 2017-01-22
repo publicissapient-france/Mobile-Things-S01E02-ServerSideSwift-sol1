@@ -3,8 +3,13 @@ import Foundation
 import HTTP
 import JSON
 import Jay
+import VaporRedis
 
 let drop = Droplet()
+
+if let redisUrlString = ProcessInfo.processInfo.environment["REDIS_URL"], let redisUrl = URL(string: redisUrlString) {
+    try drop.addProvider(VaporRedis.Provider(url: redisUrl))
+}
 
 drop.get { req in
     return "Hello, World!"
@@ -60,13 +65,21 @@ drop.post("search-giphy") { req in
 enum Vote: String {
     case up = "+"
     case down = "-"
+    
+    var diff: Int {
+        switch self {
+        case .up:
+            return 1
+            
+        case .down:
+            return -1
+        }
+    }
 }
 
 drop.post("vote-giphy") { req in
     Logger.info("env: " + (ProcessInfo.processInfo.environment["REDIS_URL"] ?? "no env var"))
-    
-    // TODO: Split in two parts
-    
+        
     guard let text = req.data["text"]?.string else {
         return Response(status: .badRequest, body: "No input provided")
     }
@@ -80,13 +93,21 @@ drop.post("vote-giphy") { req in
         return Response(status: .badRequest, body: "You can only vote with \"+\" or \"-\"")
     }
     
-    let payload: [String : Any] = [
-        "text": "Voted gif _\(tokens[0])_ with *\(vote.rawValue)*"
-    ]
+    let payload: [String : Any]
+    
+    let cacheKey = tokens[0] + "-votes"
+    if let nodeValue = try drop.cache.get(cacheKey), let intValue = nodeValue.int {
+        let newVote = intValue + vote.diff
+        try drop.cache.set(cacheKey, Node(newVote))
+        payload = ["text": "gif _\(tokens[0])_ has now *\(newVote)* votes"]
+    }
+    else {
+        try drop.cache.set(cacheKey, Node(vote.diff))
+        payload = ["text": "gif _\(tokens[0])_ has been voted for the first time"]
+    }
     
     let data = try Jay(formatting: .prettified).dataFromJson(any: payload)
     return Response(status: .ok, headers: ["Content-Type": "application/json"], body: data)
-
 }
 
 drop.run()
