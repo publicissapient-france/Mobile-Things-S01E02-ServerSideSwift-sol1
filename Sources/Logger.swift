@@ -14,7 +14,7 @@
 
 enum Logger {
     static func info(_ string: String) {
-        fputs(string, stdout)
+        fputs("puts" + string + "\n", stdout)
         fflush(stdout)
     }
 }
